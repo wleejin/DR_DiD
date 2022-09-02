@@ -2,7 +2,9 @@
 Wonjin Lee
 08-21-2022
 -------------------------------------------------------------------------------
-DR DiD
+Sant'Anna, Pedro H.C. and Jun Zhao. 2020. "Doubly Robust 
+Difference-in-Differences Estimators." Journal of Econometrics.
+
 Data: Example 13.4 from Wooldridge textbook (p.442)
 
 The effect of workers' compensation on time out of work.
@@ -60,12 +62,12 @@ print(
 # 3. Conditional DiD in 2x2 design - Sant’Anna and Zhao (2020)
 #------------------------------------------------------------------------------
 '''
-Assume that this is the stationary repeated cross-section data.
+Assume that this is a stationary repeated cross-section data.
 '''
-Y = 'ldurat'
-G = 'highearn'
-T = 'afchnge'
-X = ['male', 'married', 'manuf', 'construc', 'lage']
+Y = 'ldurat' # Outcome
+G = 'highearn' # Group dummy
+T = 'afchnge' # Time dummy
+X = ['male', 'married', 'manuf', 'construc', 'lage'] # Covariates
 
 def bootstrap_parallel(fnc, df, X, G, T, Y, sample_size_bootstrap=1000):
     ATTs = Parallel(n_jobs = 8)(
@@ -85,6 +87,7 @@ def fig_ATTs(ATTs):
 
 ## (1) Output regression DiD
 #------------------------------------------------------------------------------
+## ATT using OR
 def output_reg_DiD(df, X, G, T, Y):
     m0_before = LinearRegression().fit(
         df.query(f"{G}==0 & {T}==0")[X], df.query(f"{G}==0 & {T}==0")[Y]
@@ -103,7 +106,7 @@ def output_reg_DiD(df, X, G, T, Y):
 
 print('ATT = ', output_reg_DiD(df_ky, X, G, T, Y))
 
-# Confidence interval and histogram by bootstrap
+## Confidence interval and histogram by bootstrap
 np.random.seed(1004)
 ATTs = bootstrap_parallel(output_reg_DiD, df_ky, X, G, T, Y)
 print('95% Conf. Interval of ATT:', (np.percentile(ATTs, 2.5), np.percentile(ATTs, 97.5)))
@@ -115,6 +118,7 @@ fig_ATTs(ATTs)
 '''
 I use the equation (2.3) in the Sant’Anna and Zhao (2020).
 '''
+## ATT using IPW
 def ipw_DiD(df, X, G, T, Y):
     pscore = LogisticRegression(C=1e6, max_iter=1000).fit(
         df[X], df[G]).predict_proba(df[X])[:, 1]
@@ -125,7 +129,7 @@ def ipw_DiD(df, X, G, T, Y):
 
 print('ATT = ', ipw_DiD(df_ky, X, G, T, Y))
 
-# Confidence interval and histogram by bootstrap
+##Confidence interval and histogram by bootstrap
 np.random.seed(1004)
 ATTs = bootstrap_parallel(ipw_DiD, df_ky, X, G, T, Y)
 print('95% Conf. Interval of ATT:', (np.percentile(ATTs, 2.5), np.percentile(ATTs, 97.5)))
@@ -137,6 +141,7 @@ fig_ATTs(ATTs)
 '''
 I weight using the equation (2.3) in the Sant’Anna and Zhao (2020) for simplicity.
 '''
+## ATT using DR DiD
 def doubly_robust_DiD(df, X, G, T, Y):
     pscore = LogisticRegression(C=1e6, max_iter=1000).fit(
         df[X], df[G]).predict_proba(df[X])[:, 1]
@@ -153,7 +158,7 @@ def doubly_robust_DiD(df, X, G, T, Y):
 
 print('ATT = ', doubly_robust_DiD(df_ky, X, G, T, Y))
 
-# Confidence interval and histogram by bootstrap
+## Confidence interval and histogram by bootstrap
 np.random.seed(1004)
 ATTs = bootstrap_parallel(doubly_robust_DiD, df_ky, X, G, T, Y)
 print('95% Conf. Interval of ATT:', (np.percentile(ATTs, 2.5), np.percentile(ATTs, 97.5)))
