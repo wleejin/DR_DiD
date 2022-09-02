@@ -31,6 +31,7 @@ df_ky = df.query("ky==1")
 #------------------------------------------------------------------------------
 # 1. Unconditional DiD in 2x2 design - TWFE
 #------------------------------------------------------------------------------
+## OLS
 print(
     smf.ols('ldurat ~ afchnge*highearn', data = df_ky)
     .fit(cov_type="cluster", cov_kwds={"groups":df_ky['id']})
@@ -46,6 +47,7 @@ print([i for i in df_ky.columns if df_ky[i].isnull().any()])
 print(df_ky.isnull().sum())
 df_ky = df_ky.dropna()
 
+## OLS with covariates
 print(
     smf.ols('ldurat ~ afchnge*highearn + male + married + manuf + construc + lage',
         data = df_ky)
@@ -79,6 +81,7 @@ def fig_ATTs(ATTs):
     plt.title("ATT Dist by Bootstrap")
     plt.legend()
     plt.show()
+
 
 ## (1) Output regression DiD
 #------------------------------------------------------------------------------
